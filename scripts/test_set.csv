@@ -1,0 +1,9 @@
+question,expected_answer,expected_source,expected_page
+What is the recommended screening for diabetes?,Screening for prediabetes and type 2 diabetes in adults aged 35 to 70 years who have overweight or obesity,uspstf_recommendation_statement_2021,1
+What is the target blood pressure for diabetes?,Blood pressure target should be <=135/85 mmHg,uspstf_recommendation_statement_2021,4
+What are the first-line medications for diabetes?,Metformin is the first-line medication for type 2 diabetes,type2es,5
+What is the recommended HbA1c target?,HbA1c target is less than 7% for most adults with type 2 diabetes,type2es,4
+What are the risk factors for type 2 diabetes?,Risk factors include older age, obesity, family history, history of gestational diabetes, and physical inactivity,type2es,3
+What is the prevalence of diabetes in the US?,19.3 million Americans (9.3% of the total US population) 20 years and older had diabetes in 2002,type2es,2
+What is the recommended screening interval for diabetes?,Screening every 3 years may be a reasonable approach for adults with normal blood glucose levels,uspstf_recommendation_statement_2021,3
+What is the treatment for breast cancer?,Out of Scope - System should refuse,NOT_COVERED,0

@@ -107,13 +107,6 @@ st.markdown("""
         color: rgba(255, 255, 255, 0.3) !important;
     }
     
-    .btn-container {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        margin-top: 1rem;
-    }
-    
     .stButton > button {
         background: linear-gradient(135deg, #4fc3f7, #0288d1) !important;
         color: white !important;
@@ -186,6 +179,23 @@ st.markdown("""
         color: #4fc3f7;
     }
     
+    .answer-box-out-of-scope {
+        border-left: 3px solid #ffd54f;
+        background: rgba(255, 193, 7, 0.05);
+    }
+    
+    .out-of-scope-badge {
+        display: inline-block;
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffd54f;
+        padding: 0.2rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        margin-bottom: 0.5rem;
+    }
+    
     .confidence-section {
         display: flex;
         align-items: center;
@@ -241,6 +251,12 @@ st.markdown("""
         background: rgba(239, 83, 80, 0.2);
         color: #ef5350;
         border: 1px solid rgba(239, 83, 80, 0.3);
+    }
+    
+    .status-out-of-scope {
+        background: rgba(255, 193, 7, 0.2);
+        color: #ffd54f;
+        border: 1px solid rgba(255, 193, 7, 0.3);
     }
     
     .sources-section {
@@ -343,107 +359,6 @@ st.markdown("""
         margin-top: 0.25rem;
     }
     
-    .quick-btn {
-        width: 100%;
-        text-align: left !important;
-        background: rgba(255, 255, 255, 0.03) !important;
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
-        border-radius: 8px !important;
-        padding: 0.6rem 1rem !important;
-        color: rgba(255, 255, 255, 0.7) !important;
-        font-size: 0.85rem !important;
-        transition: all 0.3s ease !important;
-        margin-bottom: 0.3rem !important;
-    }
-    
-    .quick-btn:hover {
-        background: rgba(255, 255, 255, 0.08) !important;
-        color: white !important;
-        border-color: rgba(79, 195, 247, 0.3) !important;
-        transform: translateX(4px);
-    }
-    
-    .footer {
-        text-align: center;
-        padding: 2rem 0 1rem 0;
-        color: rgba(255, 255, 255, 0.2);
-        font-size: 0.8rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.03);
-        margin-top: 2rem;
-    }
-    
-    .footer a {
-        color: rgba(255, 255, 255, 0.3);
-        text-decoration: none;
-    }
-    
-    .footer a:hover {
-        color: rgba(79, 195, 247, 0.6);
-    }
-    
-    .spinner {
-        display: inline-block;
-        width: 20px;
-        height: 20px;
-        border: 2px solid rgba(255, 255, 255, 0.1);
-        border-top: 2px solid #4fc3f7;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-        margin-right: 10px;
-        vertical-align: middle;
-    }
-    
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
-    
-    .stSlider > div > div > div {
-        background: #4fc3f7 !important;
-    }
-    
-    .stSlider > div > div > div > div {
-        background: #4fc3f7 !important;
-    }
-    
-    .stAlert {
-        background: rgba(239, 83, 80, 0.1) !important;
-        border: 1px solid rgba(239, 83, 80, 0.2) !important;
-        color: #ef5350 !important;
-        border-radius: 12px !important;
-    }
-    
-    .stSuccess {
-        background: rgba(102, 187, 106, 0.1) !important;
-        border: 1px solid rgba(102, 187, 106, 0.2) !important;
-        color: #66bb6a !important;
-        border-radius: 12px !important;
-    }
-    
-    .stExpander {
-        background: rgba(255, 255, 255, 0.02) !important;
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
-        border-radius: 12px !important;
-    }
-    
-    .stExpander > div > div {
-        color: rgba(255, 255, 255, 0.8) !important;
-    }
-    
-    .stExpander:hover {
-        border-color: rgba(79, 195, 247, 0.2) !important;
-    }
-    
-    .warning-box {
-        background: rgba(255, 193, 7, 0.1);
-        border: 1px solid rgba(255, 193, 7, 0.2);
-        border-radius: 10px;
-        padding: 0.75rem 1rem;
-        color: #ffd54f;
-        font-size: 0.85rem;
-        margin-top: 0.5rem;
-    }
-    
     .badge-container {
         display: flex;
         gap: 0.5rem;
@@ -459,6 +374,25 @@ st.markdown("""
         font-size: 0.7rem;
         color: rgba(255, 255, 255, 0.5);
         letter-spacing: 0.5px;
+    }
+    
+    .footer {
+        text-align: center;
+        padding: 2rem 0 1rem 0;
+        color: rgba(255, 255, 255, 0.2);
+        font-size: 0.8rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.03);
+        margin-top: 2rem;
+    }
+    
+    .warning-box {
+        background: rgba(255, 193, 7, 0.1);
+        border: 1px solid rgba(255, 193, 7, 0.2);
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        color: #ffd54f;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
     }
     
     @media (max-width: 768px) {
@@ -494,7 +428,7 @@ with st.sidebar:
     st.markdown("""
     <div class="sidebar-section">
         <div class="sidebar-label">Number of Sources</div>
-        <div class="sidebar-value">Top-<span id="topk_display">5</span></div>
+        <div class="sidebar-value">Top-5</div>
     </div>
     """, unsafe_allow_html=True)
     
@@ -546,8 +480,8 @@ with st.sidebar:
         "What is the recommended HbA1c target?"
     ]
     
-    for q in quick_questions:
-        if st.button(q, key=f"quick_{q[:20]}", use_container_width=True):
+    for idx, q in enumerate(quick_questions):
+        if st.button(q, key=f"quick_{idx}", use_container_width=True):
             st.session_state.question = q
             st.session_state.asked = True
             st.rerun()
@@ -623,8 +557,23 @@ if st.session_state.asked and st.session_state.question:
                 """, unsafe_allow_html=True)
                 
                 answer_text = data.get("answer", "No answer available.")
+                is_out_of_scope = data.get("is_out_of_scope", False)
                 
-                if "don't have enough information" in answer_text.lower():
+                if is_out_of_scope:
+                    st.markdown(f"""
+                    <div style="margin-bottom:0.75rem;">
+                        <span class="out-of-scope-badge">⛔ OUT OF SCOPE</span>
+                    </div>
+                    <div class="answer-box answer-box-out-of-scope">
+                        <span style="font-size:1.2rem;margin-right:0.5rem;">📋</span>
+                        {answer_text}
+                    </div>
+                    <div class="warning-box">
+                        ⚠️ This question is outside the scope of the available guidelines. 
+                        This system only provides answers based on diabetes guidelines from USPSTF and WHO.
+                    </div>
+                    """, unsafe_allow_html=True)
+                elif "don't have enough information" in answer_text.lower():
                     st.markdown(f"""
                     <div class="answer-box" style="border-left-color:#ffd54f;">
                         <span style="font-size:1.2rem;margin-right:0.5rem;">📋</span>
@@ -647,7 +596,15 @@ if st.session_state.asked and st.session_state.question:
                 conf_pct = int(confidence * 100)
                 bar_color = "#66bb6a" if conf_pct > 70 else "#ffd54f" if conf_pct > 50 else "#ef5350"
                 status_text = "High Confidence" if conf_pct > 70 else "Moderate Confidence" if conf_pct > 50 else "Low Confidence"
-                status_class = "status-confident" if conf_pct > 50 else "status-low"
+                
+                if is_out_of_scope:
+                    status_class = "status-out-of-scope"
+                    status_text = "Out of Scope"
+                    bar_color = "#ffd54f"
+                elif conf_pct > 50:
+                    status_class = "status-confident"
+                else:
+                    status_class = "status-low"
                 
                 st.markdown(f"""
                 <div class="confidence-section">
@@ -661,7 +618,7 @@ if st.session_state.asked and st.session_state.question:
                 """, unsafe_allow_html=True)
                 
                 sources = data.get("sources", [])
-                if sources:
+                if sources and not is_out_of_scope:
                     st.markdown("""
                     <div class="sources-section">
                         <div class="sources-header">📚 Sources</div>

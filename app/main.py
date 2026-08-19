@@ -13,6 +13,7 @@ import config
 from core.ingest import load_index
 from core.retrieval import DiabetesRetriever
 from core.generation import LocalLLM
+from core.evaluation import run_evaluation, load_evaluation_results
 
 logging.basicConfig(level="INFO")
 logger = logging.getLogger(__name__)
@@ -49,6 +50,7 @@ class QueryResponse(BaseModel):
     sources: List[Source]
     confidence: float
     is_confident: bool
+    is_out_of_scope: bool = False
     timestamp: str
 
 
@@ -75,10 +77,11 @@ async def query(request: QueryRequest):
         if not results:
             return QueryResponse(
                 question=request.question,
-                answer="No relevant information found in the guidelines.",
+                answer="I don't have enough information to answer this question. This system only provides answers based on diabetes guidelines from USPSTF and WHO.",
                 sources=[],
                 confidence=0.0,
                 is_confident=False,
+                is_out_of_scope=True,
                 timestamp=datetime.now().isoformat()
             )
         
@@ -86,6 +89,8 @@ async def query(request: QueryRequest):
         
         context = retriever.prepare_context(results)
         response = llm.generate(request.question, context)
+        
+        is_out_of_scope = response.get("is_out_of_scope", False)
         
         sources = [
             Source(
@@ -100,9 +105,10 @@ async def query(request: QueryRequest):
         return QueryResponse(
             question=request.question,
             answer=response["answer"],
-            sources=sources,
-            confidence=max_score,
-            is_confident=is_confident,
+            sources=sources if not is_out_of_scope else [],
+            confidence=max_score if not is_out_of_scope else 0.0,
+            is_confident=is_confident and not is_out_of_scope,
+            is_out_of_scope=is_out_of_scope,
             timestamp=datetime.now().isoformat()
         )
     
@@ -117,3 +123,26 @@ async def health():
         "status": "healthy" if retriever else "initializing",
         "chunks": retriever.get_total_chunks() if retriever else 0
     }
+
+
+@app.get("/evaluate")
+async def evaluate():
+    """Run evaluation and return results"""
+    if not retriever:
+        return {"error": "Retriever not initialized"}
+    
+    try:
+        results = run_evaluation(retriever, llm)
+        return results
+    except Exception as e:
+        logger.error(f"Evaluation error: {e}")
+        return {"error": str(e)}
+
+
+@app.get("/evaluation/results")
+async def get_evaluation_results():
+    """Get saved evaluation results"""
+    results = load_evaluation_results()
+    if not results:
+        return {"status": "No evaluation results found. Run /evaluate first."}
+    return results
