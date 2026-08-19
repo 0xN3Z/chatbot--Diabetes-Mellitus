@@ -1,0 +1,5 @@
+# امسح الفهرس القديم
+Remove-Item -Recurse -Force "D:\chatbot--Diabetes-Mellitus\data\chroma_db"
+
+# شغل النظام
+python run.py

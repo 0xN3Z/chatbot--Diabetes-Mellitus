@@ -25,7 +25,7 @@ class LocalLLM:
             )
             
             self.pipeline = pipeline(
-                "text2text-generation",
+                "text-generation",  # ✅ تغيير من text2text-generation لـ text-generation
                 model=model,
                 tokenizer=tokenizer,
                 max_new_tokens=config.LLM_MAX_TOKENS,
@@ -41,18 +41,14 @@ class LocalLLM:
             self.pipeline = None
     
     def _is_meaningful_question(self, question: str) -> bool:
-        """Check if the question is meaningful and not spam"""
         question = question.strip()
         
-        # Too short
-        if len(question) < 5:
+        if len(question) < 3:
             return False
         
-        # Too many random characters
-        if len(re.findall(r'[a-zA-Z]', question)) < 3:
+        if len(re.findall(r'[a-zA-Z]', question)) < 2:
             return False
         
-        # Contains common medical/clinical keywords
         clinical_keywords = [
             'diabetes', 'screening', 'diagnosis', 'treatment', 'management',
             'glucose', 'blood', 'sugar', 'insulin', 'a1c', 'hba1c',
@@ -67,9 +63,7 @@ class LocalLLM:
         question_lower = question.lower()
         has_clinical_keyword = any(kw in question_lower for kw in clinical_keywords)
         
-        # If no clinical keyword and question is not a clear question, refuse
         if not has_clinical_keyword:
-            # Check if it's a question (contains ? or starts with question word)
             is_question = '?' in question or question_lower.startswith(('what', 'when', 'why', 'how', 'which', 'who', 'where', 'is', 'are', 'can', 'does', 'do'))
             if not is_question:
                 return False
@@ -77,7 +71,6 @@ class LocalLLM:
         return True
     
     def _is_out_of_scope(self, question: str, context: str) -> bool:
-        # First check if question is meaningful
         if not self._is_meaningful_question(question):
             return True
         
@@ -108,39 +101,27 @@ class LocalLLM:
         
         question_lower = question.lower()
         
-        # Check out of scope keywords
         for kw in out_of_scope_keywords:
             if kw in question_lower:
                 return True
         
-        # Check if any diabetes keyword is present
         has_diabetes_keyword = any(kw in question_lower for kw in diabetes_keywords)
         
-        # If no diabetes keyword, check context
         if not has_diabetes_keyword:
-            context_lower = context.lower()
+            context_lower = context.lower()  # ✅ تعريف context_lower هنا
             if not any(kw in context_lower for kw in diabetes_keywords):
                 return True
         
-        # Check if context actually contains useful information
-        # If context is too short or seems like random text, refuse
         context_words = len(context.split())
         if context_words < 20:
-            return True
-        
-        # Check if context contains references or citations (meaningful content)
-        has_reference = 'reference' in context_lower or 'table' in context_lower or 'figure' in context_lower
-        if not has_reference and context_words < 50:
             return True
         
         return False
     
     def generate(self, question: str, context: str) -> Dict[str, str]:
-        # Check if question is out of scope
         if self._is_out_of_scope(question, context):
             return self._out_of_scope_response()
         
-        # Try LLM first
         if self.pipeline is not None:
             try:
                 prompt = self._build_prompt(question, context)
@@ -151,13 +132,9 @@ class LocalLLM:
             except Exception as e:
                 print(f"Generation error: {e}")
         
-        # Fallback: extract from context
         return self._extract_from_context(question, context)
     
     def _extract_from_context(self, question: str, context: str) -> Dict[str, str]:
-        """Extract answer from context - with quality check"""
-        
-        # Check if context is meaningful
         context_words = len(context.split())
         if context_words < 20:
             return self._out_of_scope_response()
@@ -170,19 +147,15 @@ class LocalLLM:
         
         full_text = " ".join(passages)
         
-        # Check if the answer is actually in the context
         question_words = set(re.findall(r'\b[a-zA-Z]{3,}\b', question.lower()))
         context_words_set = set(re.findall(r'\b[a-zA-Z]{3,}\b', full_text.lower()))
         
-        # If very few question words are in context, it's likely irrelevant
-        overlap = len(question_words & context_words_set)
-        if len(question_words) > 3 and overlap < 2:
+        if len(question_words) > 3 and len(question_words & context_words_set) < 2:
             return self._out_of_scope_response()
         
         # ===== SPECIAL HANDLING FOR SCREENING QUESTIONS =====
         if "screening" in question.lower() or "screen" in question.lower():
             
-            # USPSTF Recommendation
             uspstf_pattern = r'USPSTF recommends screening for prediabetes and type 2 diabetes in adults aged (\d+) to (\d+) years who have overweight or obesity'
             match = re.search(uspstf_pattern, full_text, re.IGNORECASE)
             
@@ -209,7 +182,6 @@ class LocalLLM:
                     "is_out_of_scope": False
                 }
             
-            # ADA Recommendation
             ada_age_match = re.search(r'adults? (\d+) years', full_text, re.IGNORECASE)
             ada_bmi_match = re.search(r'BMI [≥=] (\d+)', full_text, re.IGNORECASE)
             ada_interval_match = re.search(r'(\d+)-year intervals?', full_text, re.IGNORECASE)
@@ -232,7 +204,21 @@ class LocalLLM:
                     "is_out_of_scope": False
                 }
         
-        # ===== GENERAL EXTRACTION WITH QUALITY CHECK =====
+        # ===== SPECIAL HANDLING FOR BLOOD PRESSURE =====
+        if "blood pressure" in question.lower() or "bp" in question.lower():
+            bp_pattern = r'blood pressure target.*?(\d+)\s*/\s*(\d+)'
+            match = re.search(bp_pattern, full_text, re.IGNORECASE)
+            if match:
+                sys, dia = match.groups()
+                return {
+                    "answer": f"The target blood pressure for diabetes is {sys}/{dia} mmHg.",
+                    "recommendation": f"Target blood pressure: {sys}/{dia} mmHg",
+                    "evidence": full_text[:400] + "...",
+                    "citation": "Diabetes Guidelines",
+                    "is_out_of_scope": False
+                }
+        
+        # ===== GENERAL EXTRACTION =====
         sentences = re.split(r'[.!?]+', full_text)
         sentences = [s.strip() for s in sentences if len(s.strip()) > 15]
         
@@ -267,12 +253,7 @@ class LocalLLM:
         
         scored_sentences.sort(key=lambda x: x[1], reverse=True)
         
-        if not scored_sentences:
-            return self._out_of_scope_response()
-        
-        # Only use top sentences if they have a reasonable score
-        best_score = scored_sentences[0][1]
-        if best_score < 3:
+        if not scored_sentences or scored_sentences[0][1] < 3:
             return self._out_of_scope_response()
         
         best_sentences = [s[0] for s in scored_sentences[:4] if s[1] > 0]
@@ -316,10 +297,6 @@ INSTRUCTIONS:
 2. Include specific details like age ranges, BMI thresholds, and test names
 3. If the context mentions a specific organization (USPSTF, ADA, WHO), mention it
 4. If the context does NOT contain relevant information, say "I don't have enough information"
-5. Structure your answer as:
-   - Main Recommendation: (direct answer)
-   - Details: (supporting information)
-   - Source: (document name)
 
 ANSWER:"""
     
