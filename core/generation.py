@@ -16,16 +16,16 @@ class LocalLLM:
         try:
             print(f"Loading LLM: {config.LLM_MODEL}")
             
-            from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
+            from transformers import AutoTokenizer, AutoModelForCausalLM, pipeline
             
             tokenizer = AutoTokenizer.from_pretrained(config.LLM_MODEL)
-            model = AutoModelForSeq2SeqLM.from_pretrained(
+            model = AutoModelForCausalLM.from_pretrained(
                 config.LLM_MODEL,
                 device_map="cpu"
             )
             
             self.pipeline = pipeline(
-                "text-generation",  # ✅ تغيير من text2text-generation لـ text-generation
+                "text-generation",
                 model=model,
                 tokenizer=tokenizer,
                 max_new_tokens=config.LLM_MAX_TOKENS,
@@ -40,6 +40,62 @@ class LocalLLM:
             print("   Using extraction mode")
             self.pipeline = None
     
+    def _is_diabetes_question(self, question: str) -> bool:
+        """Check if question is specifically about diabetes"""
+        
+        # Core diabetes keywords - MUST have at least one
+        diabetes_core = [
+            'diabetes', 'diabetic', 'type 2', 'type2', 't2dm',
+            'prediabetes', 'pre-diabetes', 'hyperglycemia',
+            'hypoglycemia', 'glucose', 'insulin', 'a1c', 'hba1c',
+            'blood sugar', 'fasting glucose', 'ogtt',
+            'metformin', 'sulfonylurea', 'glycemic',
+            'retinopathy', 'nephropathy', 'neuropathy',
+            'ketoacidosis', 'mmol', 'mg/dL',
+            'screening for diabetes', 'diabetes management',
+            'diabetes treatment', 'diabetes prevention',
+            'diabetes complications', 'diabetes care'
+        ]
+        
+        question_lower = question.lower()
+        
+        # Must have at least one core diabetes keyword
+        has_core = any(kw in question_lower for kw in diabetes_core)
+        
+        if not has_core:
+            return False
+        
+        return True
+    
+    def _is_clearly_out_of_scope(self, question: str) -> bool:
+        """Check if question is clearly about something else"""
+        
+        out_of_scope = [
+            'breast cancer', 'lung cancer', 'colon cancer', 'prostate cancer',
+            'cancer treatment', 'chemotherapy', 'radiation therapy',
+            'covid', 'coronavirus', 'vaccine', 'covid-19',
+            'alzheimer', 'dementia', 'parkinson',
+            'heart attack', 'stroke', 'cardiac arrest',
+            'pregnancy', 'childbirth', 'obstetric',
+            'pediatric', 'children', 'infant',
+            'hypertension only', 'high blood pressure only',
+            'cholesterol only', 'lipid only',
+            'asthma', 'copd', 'lung disease',
+            'kidney disease only', 'liver disease',
+            'thyroid', 'osteoporosis', 'arthritis'
+        ]
+        
+        question_lower = question.lower()
+        
+        # Check if question is about something else
+        for kw in out_of_scope:
+            if kw in question_lower:
+                # Make sure it's not about diabetes complications
+                if 'diabetes' not in question_lower:
+                    return True
+        
+        return False
+    
     def _is_meaningful_question(self, question: str) -> bool:
         question = question.strip()
         
@@ -49,79 +105,37 @@ class LocalLLM:
         if len(re.findall(r'[a-zA-Z]', question)) < 2:
             return False
         
-        clinical_keywords = [
-            'diabetes', 'screening', 'diagnosis', 'treatment', 'management',
-            'glucose', 'blood', 'sugar', 'insulin', 'a1c', 'hba1c',
-            'prevention', 'complication', 'retinopathy', 'nephropathy',
-            'neuropathy', 'hypertension', 'pressure', 'medication', 'drug',
-            'metformin', 'sulfonylurea', 'therapy', 'care', 'patient',
-            'risk', 'factor', 'guideline', 'recommendation', 'protocol',
-            'what', 'when', 'why', 'how', 'which', 'who', 'where',
-            'target', 'goal', 'normal', 'abnormal', 'test', 'exam'
-        ]
-        
-        question_lower = question.lower()
-        has_clinical_keyword = any(kw in question_lower for kw in clinical_keywords)
-        
-        if not has_clinical_keyword:
-            is_question = '?' in question or question_lower.startswith(('what', 'when', 'why', 'how', 'which', 'who', 'where', 'is', 'are', 'can', 'does', 'do'))
-            if not is_question:
-                return False
-        
         return True
     
     def _is_out_of_scope(self, question: str, context: str) -> bool:
+        # Basic check
         if not self._is_meaningful_question(question):
             return True
         
-        diabetes_keywords = [
-            'diabetes', 'diabetic', 'type 2', 'type2', 't2dm',
-            'prediabetes', 'pre-diabetes', 'hyperglycemia',
-            'glucose', 'insulin', 'a1c', 'hba1c',
-            'blood sugar', 'fasting glucose', 'ogtt',
-            'metformin', 'sulfonylurea',
-            'pancreas', 'beta cell', 'glycemic',
-            'retinopathy', 'nephropathy', 'neuropathy',
-            'foot ulcer', 'amputation', 'ketoacidosis',
-            'hypoglycemia', 'mmol', 'mg/dL',
-            'screening', 'diagnosis', 'management',
-            'treatment', 'prevention', 'complication',
-            'hypertension', 'blood pressure', 'lipid', 'cholesterol'
-        ]
+        # Check if clearly out of scope
+        if self._is_clearly_out_of_scope(question):
+            return True
         
-        out_of_scope_keywords = [
-            'breast cancer', 'lung cancer', 'colon cancer', 'prostate cancer',
-            'cancer treatment', 'chemotherapy', 'radiation',
-            'covid', 'coronavirus', 'vaccine',
-            'alzheimer', 'dementia', 'parkinson',
-            'heart attack', 'stroke', 'cardiac arrest',
-            'pregnancy', 'childbirth', 'obstetric',
-            'pediatric', 'children', 'infant'
-        ]
+        # Check if it's a diabetes question
+        if not self._is_diabetes_question(question):
+            return True
         
-        question_lower = question.lower()
+        # Check if context has diabetes content
+        context_lower = context.lower()
+        diabetes_indicators = ['diabetes', 'glucose', 'insulin', 'a1c', 'hba1c', 'screening', 'mmol', 'mg/dL']
+        has_diabetes_context = any(kw in context_lower for kw in diabetes_indicators)
         
-        for kw in out_of_scope_keywords:
-            if kw in question_lower:
-                return True
-        
-        has_diabetes_keyword = any(kw in question_lower for kw in diabetes_keywords)
-        
-        if not has_diabetes_keyword:
-            context_lower = context.lower()  # ✅ تعريف context_lower هنا
-            if not any(kw in context_lower for kw in diabetes_keywords):
-                return True
-        
-        context_words = len(context.split())
-        if context_words < 20:
+        if not has_diabetes_context:
             return True
         
         return False
     
     def generate(self, question: str, context: str) -> Dict[str, str]:
+        # Check if out of scope
         if self._is_out_of_scope(question, context):
             return self._out_of_scope_response()
         
+        # Try LLM first
         if self.pipeline is not None:
             try:
                 prompt = self._build_prompt(question, context)
@@ -147,15 +161,8 @@ class LocalLLM:
         
         full_text = " ".join(passages)
         
-        question_words = set(re.findall(r'\b[a-zA-Z]{3,}\b', question.lower()))
-        context_words_set = set(re.findall(r'\b[a-zA-Z]{3,}\b', full_text.lower()))
-        
-        if len(question_words) > 3 and len(question_words & context_words_set) < 2:
-            return self._out_of_scope_response()
-        
-        # ===== SPECIAL HANDLING FOR SCREENING QUESTIONS =====
-        if "screening" in question.lower() or "screen" in question.lower():
-            
+        # ===== SCREENING QUESTIONS =====
+        if "screening" in question.lower():
             uspstf_pattern = r'USPSTF recommends screening for prediabetes and type 2 diabetes in adults aged (\d+) to (\d+) years who have overweight or obesity'
             match = re.search(uspstf_pattern, full_text, re.IGNORECASE)
             
@@ -204,7 +211,7 @@ class LocalLLM:
                     "is_out_of_scope": False
                 }
         
-        # ===== SPECIAL HANDLING FOR BLOOD PRESSURE =====
+        # ===== BLOOD PRESSURE =====
         if "blood pressure" in question.lower() or "bp" in question.lower():
             bp_pattern = r'blood pressure target.*?(\d+)\s*/\s*(\d+)'
             match = re.search(bp_pattern, full_text, re.IGNORECASE)
@@ -311,18 +318,9 @@ ANSWER:"""
     
     def _out_of_scope_response(self) -> Dict[str, str]:
         return {
-            "answer": "I don't have enough information to answer this question. This system provides evidence-based answers about diabetes management, screening, and care using guidelines from WHO, USPSTF, and other official sources. Please ask a clear question related to diabetes.",
-            "recommendation": "Question is out of scope or unclear.",
+            "answer": "I don't have enough information to answer this question. This system only provides answers about diabetes management, screening, and care using guidelines from WHO, USPSTF, and other official sources. Please ask a clear question related to diabetes (e.g., screening, diagnosis, treatment, complications).",
+            "recommendation": "Question is out of scope.",
             "evidence": "",
             "citation": "",
             "is_out_of_scope": True
-        }
-    
-    def _fallback_response(self, question: str) -> Dict[str, str]:
-        return {
-            "answer": "I couldn't find enough information in the available guidelines to answer this question. Please try rephrasing or asking a different question about diabetes.",
-            "recommendation": "Insufficient information.",
-            "evidence": "",
-            "citation": "",
-            "is_out_of_scope": False
         }

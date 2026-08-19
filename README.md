@@ -1,260 +1,228 @@
-# 🩺 Diabetes Clinical Assistant
 
-### *Where AI meets clinical evidence*
+```markdown
+# Diabetes Clinical Assistant
 
----
-
-## ✨ **The Vibe**
-
-> **No API keys. No cloud costs. Just pure RAG power.**
-
-This isn't just another chatbot. It's a **clinical decision support system** that actually cites its sources — because in healthcare, **"trust me bro"** isn't good enough.
+Evidence-based clinical decision support system for diabetes mellitus using WHO and USPSTF guidelines.
 
 ---
 
-## 🎯 **What It Does**
+## Overview
 
-| Feature | What It Means |
-|---------|---------------|
-| 🔍 **Semantic Search** | Understands meaning, not just keywords |
-| 📚 **Cited Answers** | Every answer = Document + Page Number |
-| 🧠 **Local Models** | 100% offline, runs on your laptop |
-| 🚫 **Refusal Logic** | Says "I don't know" instead of hallucinating |
-| 📊 **Confidence Scores** | Shows you how sure it is (0-100%) |
+A Retrieval-Augmented Generation (RAG) chatbot that answers clinical questions about diabetes using official guidelines. Every answer includes citations with document name and page number.
 
----
-
-## 🧩 **The Stack**
-
-```
-┌─────────────────────────────────────────────┐
-│               🖥️  STREAMLIT UI              │
-├─────────────────────────────────────────────┤
-│               ⚡  FASTAPI BACKEND           │
-├─────────────────────────────────────────────┤
-│   🔍 SEARCH    │   🧠 GENERATE   │   📚 CITE │
-├─────────────────────────────────────────────┤
-│  🌐 CHROMADB   │  📄 PYMUPDF     │   🐍 PYTHON│
-└─────────────────────────────────────────────┘
-```
-
-**Models (All Local, All Free):**
-- `BAAI/bge-small-en-v1.5` — Smart embeddings (~100MB)
-- `google/flan-t5-small` — Lightweight LLM (~300MB)
-
-**Total: ~400MB of pure intelligence.**
+**Key Features:**
+- Semantic search using local embeddings
+- Cited answers with page references
+- Out-of-scope detection and refusal
+- Confidence scoring for every answer
+- 100% local - no API keys required
+- Lightweight models (~400MB total)
 
 ---
 
-## 🚀 **Quick Start**
+## Technology Stack
 
-```bash
-# 1. Clone & install
-git clone <your-repo>
-cd chatbot--Diabetes-Mellitus
-pip install -r requirements.txt
-
-# 2. Add your PDFs
-# 📁 data/raw_pdfs/
-#    ├── type2es.pdf
-#    └── uspstf_recommendation_statement_2021.pdf
-
-# 3. Run it
-python run.py
-
-# 4. Open browser
-# 🌐 http://localhost:8501
-```
-
-**That's it. No env files. No API keys. Just run.**
+| Component | Technology |
+|-----------|------------|
+| Embeddings | BAAI/bge-small-en-v1.5 (100MB) |
+| LLM | google/flan-t5-small (300MB) |
+| Vector DB | ChromaDB |
+| Backend | FastAPI |
+| Frontend | Streamlit |
+| PDF Processing | PyMuPDF |
 
 ---
 
-## 💬 **Try These Questions**
-
-```yaml
-✅ In-scope (will answer):
-  - "What is the recommended screening for diabetes?"
-  - "What is the target blood pressure for diabetes?"
-  - "What are the first-line medications for diabetes?"
-  - "What is the recommended HbA1c target?"
-
-❌ Out-of-scope (will refuse):
-  - "What is the treatment for breast cancer?"
-  - "How do I treat COVID-19?"
-```
-
----
-
-## 📊 **What It Looks Like**
-
-```
-┌─────────────────────────────────────────────────────┐
-│ 🩺  Diabetes Clinical Assistant                     │
-│ Evidence-based answers from USPSTF & WHO guidelines │
-├─────────────────────────────────────────────────────┤
-│                                                     │
-│  ┌─────────────────────────────────────────────┐    │
-│  │  ❓ What is the recommended screening for   │    │
-│  │     diabetes?                              │    │
-│  └─────────────────────────────────────────────┘    │
-│                                                     │
-│  📝 Answer                                          │
-│  ┌─────────────────────────────────────────────┐    │
-│  │  The USPSTF recommends screening for        │    │
-│  │  prediabetes and type 2 diabetes in adults  │    │
-│  │  aged 35-70 with overweight or obesity.     │    │
-│  └─────────────────────────────────────────────┘    │
-│                                                     │
-│  📊 Confidence: 92%  ████████████████████  High    │
-│                                                     │
-│  📚 Sources                                         │
-│  ┌─────────────────────────────────────────────┐    │
-│  │  #1  Score: 0.92  🔥  uspstf_2021 — Page 1 │    │
-│  └─────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────┘
-```
-
----
-
-## 🏗️ **Project Structure**
+## Project Structure
 
 ```
 chatbot--Diabetes-Mellitus/
 │
-├── 📁 app/
+├── app/
 │   ├── main.py          # FastAPI backend
-│   └── ui.py            # Streamlit frontend (✨ fancy)
+│   └── ui.py            # Streamlit frontend
 │
-├── 📁 core/
-│   ├── ingest.py        # PDF → Chunks → Index
-│   ├── retrieval.py     # Hybrid search (semantic + keywords)
+├── core/
+│   ├── ingest.py        # PDF processing and indexing
+│   ├── retrieval.py     # Semantic search with hybrid
 │   ├── generation.py    # LLM with refusal logic
 │   └── evaluation.py    # Test suite
 │
-├── 📁 data/
-│   └── raw_pdfs/        # Your guidelines here
+├── data/
+│   └── raw_pdfs/
+│       ├── dsa698.pdf
+│       ├── type2es.pdf
+│       └── uspstf_recommendation_statement_2021.pdf
 │
-├── 📁 eval/
-│   └── test_set.csv     # 8 evaluation questions
+├── eval/
+│   └── test_set.csv
 │
-├── 📄 config.py         # One file to rule them all
-├── 📄 requirements.txt  # Dependencies
-├── 📄 run.py            # The magic button
-└── 📄 README.md         # You are here ✨
+├── scripts/
+│   └── run_evaluation.py
+│
+├── config.py
+├── requirements.txt
+├── run.py
+└── README.md
 ```
 
 ---
 
-## 🎮 **How It Works (ELI5)**
+## Quick Start
 
-```
-Your Question
-     ↓
-🔍 Search: Finds relevant chunks from PDFs
-     ↓
-📊 Score: How similar? (0-1)
-     ↓
-🧠 Generate: LLM writes answer (if confident)
-     ↓
-📚 Cite: "Here's where I got this from"
-     ↓
-✅ Answer: Evidence-based + Cited
-```
-
----
-
-## 📈 **Evaluation Metrics**
-
-| Metric | Score |
-|--------|-------|
-| **Pass Rate** | 85-90% |
-| **Source Match** | 90%+ |
-| **Page Match** | 80%+ |
-| **Refusal Rate** | 100% (for out-of-scope) |
-
-*Run your own: `python scripts/run_evaluation.py`*
-
----
-
-## 🛠️ **Tech Details**
-
-| Component | Choice | Why |
-|-----------|--------|-----|
-| **Embeddings** | bge-small-en-v1.5 | Smart enough, small enough |
-| **LLM** | flan-t5-small | Lightweight, does the job |
-| **Vector DB** | ChromaDB | Local, fast, persistent |
-| **PDF** | PyMuPDF | Tables + text = win |
-| **Backend** | FastAPI | Fast (duh) + docs auto |
-| **Frontend** | Streamlit | Quick, pretty, interactive |
-
----
-
-## 🔥 **Cool Features**
-
-- **Hybrid Search**: Semantic + Keyword = 🔥
-- **Query Expansion**: "diabetes" → "diabetes mellitus t2dm hyperglycemia"
-- **Out-of-Scope Detection**: "breast cancer?" → "I don't know"
-- **Confidence Bars**: Visual feedback on answer reliability
-- **Dark Theme**: Because we're not savages
-
----
-
-## 🧪 **Evaluation**
+### Installation
 
 ```bash
-# Run the test suite
-python scripts/run_evaluation.py
+# Clone repository
+git clone <your-repo-url>
+cd chatbot--Diabetes-Mellitus
 
-# Or via API
+# Install dependencies
+pip install -r requirements.txt
+```
+
+### Running the System
+
+```bash
+python run.py
+```
+
+### Access
+
+| Service | URL |
+|---------|-----|
+| Web UI | http://localhost:8501 |
+| API | http://localhost:8000 |
+| API Docs | http://localhost:8000/docs |
+
+---
+
+## Configuration
+
+Edit `config.py` to customize:
+
+```python
+CHUNK_SIZE = 400
+CHUNK_OVERLAP = 100
+TOP_K = 6
+SIMILARITY_THRESHOLD = 0.50
+
+EMBEDDING_MODEL = "BAAI/bge-small-en-v1.5"
+LLM_MODEL = "google/flan-t5-small"
+
+ENABLE_HYBRID_SEARCH = True
+ENABLE_QUERY_EXPANSION = True
+```
+
+---
+
+## Example Questions
+
+**In-scope (will answer):**
+- What is the recommended screening for diabetes?
+- What is the target blood pressure for diabetes?
+- What are the first-line medications for diabetes?
+- What is the recommended HbA1c target?
+
+**Out-of-scope (will refuse):**
+- What is the treatment for breast cancer?
+- How do I treat COVID-19?
+
+---
+
+## API Endpoints
+
+### POST /query
+
+Ask a clinical question.
+
+**Request:**
+```json
+{
+    "question": "What is the recommended screening for diabetes?",
+    "top_k": 5
+}
+```
+
+**Response:**
+```json
+{
+    "question": "What is the recommended screening for diabetes?",
+    "answer": "The USPSTF recommends screening for prediabetes...",
+    "sources": [
+        {
+            "content": "...",
+            "document": "uspstf_recommendation_statement_2021",
+            "page": 1,
+            "score": 0.85
+        }
+    ],
+    "confidence": 0.85,
+    "is_confident": true,
+    "is_out_of_scope": false,
+    "timestamp": "2024-01-15T10:30:00"
+}
+```
+
+### GET /health
+
+Check system status.
+
+### GET /evaluate
+
+Run evaluation suite.
+
+---
+
+## Evaluation
+
+Run the test suite:
+
+```bash
+python scripts/run_evaluation.py
+```
+
+Or via API:
+
+```bash
 curl http://localhost:8000/evaluate
 ```
 
 ---
 
-## 🤝 **Contributing**
+## Troubleshooting
 
-Found a bug? Have an idea? Open an issue or PR.
-
----
-
-## 📄 **License**
-
-MIT — Do whatever you want with it. Just cite your sources. (Like we do.)
-
----
-
-## ⚠️ **Disclaimer**
-
-> This is a **demonstration system** for educational purposes.
-> 
-> **Not for clinical use.**
-> 
-> Always consult a qualified healthcare professional.
-> 
-> *— Because AI is cool, but doctors are cooler.*
-
----
-
-## ⭐ **Star This Repo**
-
-If this helped you, give it a ⭐ — it tells me to keep building.
-
----
-
-## 🎯 **TL;DR**
-
-```yaml
-What:  RAG chatbot for diabetes guidelines
-How:   Local models + Hybrid Search + Citations
-Why:   Clinical answers you can actually trust
-Size:  ~400MB total
-Cost:  $0
-Time:  5 minutes to run
+**ChromaDB disk full error:**
+```bash
+Remove-Item -Recurse -Force "data/chroma_db"
+python run.py
 ```
 
+**LLM loading issues:**
+- First load may take 1-2 minutes
+- Model is cached after first download
+
+**Memory issues:**
+- Reduce CHUNK_SIZE in config.py
+- Use smaller embedding model: `all-MiniLM-L6-v2`
+
 ---
 
-*Built with 💻 and ☕ during a hackathon. Because evidence matters.*
+## License
+
+MIT License
 
 ---
+
+## Disclaimer
+
+This is a demonstration system for educational purposes only. Not for direct clinical use. Always consult a qualified healthcare professional for clinical decisions.
+
+---
+
+## Credits
+
+Based on guidelines from:
+- World Health Organization (WHO)
+- US Preventive Services Task Force (USPSTF)
+```
