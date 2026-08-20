@@ -169,10 +169,44 @@ class LocalLLM:
         
         full_text = " ".join(passages)
         
+        # ===== SPECIAL HANDLING FOR HbA1c QUESTIONS =====
+        if "hba1c" in question.lower() or "a1c" in question.lower() or "glycated hemoglobin" in question.lower():
+            
+            hba1c_patterns = [
+                r'HbA1c.*?target.*?(\d+\.?\d*)\s*%',
+                r'target.*?HbA1c.*?(\d+\.?\d*)\s*%',
+                r'HbA1c.*?(\d+\.?\d*)\s*%\s*(?:or less|or lower|<|≤)',
+                r'(\d+\.?\d*)\s*%\s*(?:target|goal)',
+                r'Optimal.*?HbA1c.*?(\d+\.?\d*)\s*%'
+            ]
+            
+            for pattern in hba1c_patterns:
+                match = re.search(pattern, full_text, re.IGNORECASE)
+                if match:
+                    target = match.group(1)
+                    answer = f"The target HbA1c level for diabetes is less than {target}% for most adults with type 2 diabetes."
+                    
+                    normal_match = re.search(r'Normal.*?(\d+\.?\d*)\s*%', full_text, re.IGNORECASE)
+                    action_match = re.search(r'Action needed.*?(\d+\.?\d*)\s*%', full_text, re.IGNORECASE)
+                    
+                    if normal_match or action_match:
+                        answer += " Optimal control indicators:"
+                        if normal_match:
+                            answer += f" Normal: < {normal_match.group(1)}%"
+                        if action_match:
+                            answer += f" Action needed: > {action_match.group(1)}%"
+                    
+                    return {
+                        "answer": answer,
+                        "recommendation": answer,
+                        "evidence": full_text[:400] + "...",
+                        "citation": "WHO Diabetes Guidelines",
+                        "is_out_of_scope": False
+                    }
+        
         # ===== SPECIAL HANDLING FOR SCREENING QUESTIONS =====
         if "screening" in question.lower() or "screen" in question.lower():
             
-            # PRIORITY 1: USPSTF Recommendation
             uspstf_pattern = r'USPSTF recommends screening for prediabetes and type 2 diabetes in adults aged (\d+) to (\d+) years who have overweight or obesity'
             match = re.search(uspstf_pattern, full_text, re.IGNORECASE)
             
@@ -199,7 +233,6 @@ class LocalLLM:
                     "is_out_of_scope": False
                 }
             
-            # PRIORITY 2: ADA Recommendation
             ada_age_match = re.search(r'adults? (\d+) years', full_text, re.IGNORECASE)
             ada_bmi_match = re.search(r'BMI [≥=] (\d+)', full_text, re.IGNORECASE)
             ada_interval_match = re.search(r'(\d+)-year intervals?', full_text, re.IGNORECASE)
@@ -342,6 +375,9 @@ class LocalLLM:
                     answer_bonus += 5
             elif "diagnosis" in question.lower():
                 if any(kw in sentence_lower for kw in ['diagnos', 'test', 'detect', 'identify']):
+                    answer_bonus += 5
+            elif "hba1c" in question.lower() or "a1c" in question.lower():
+                if any(kw in sentence_lower for kw in ['hba1c', 'a1c', 'glycated', 'hemoglobin']):
                     answer_bonus += 5
             
             if re.search(r'\d+', sentence):
